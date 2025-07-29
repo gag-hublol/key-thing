@@ -1,5 +1,4 @@
 fastapi
-uvicorn
+uvicorn[standard]
 discord.py
-python-dotenv
-requests
+pydantic
