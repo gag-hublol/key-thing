@@ -1,13 +1,17 @@
-import os, json, random, string, asyncio, time
+import os
+import asyncio
+import time
+import random
+import string
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 from discord.ext import commands
 from discord import Embed, Intents, Interaction, ButtonStyle
 from discord.ui import View, Button
-from datetime import datetime, timedelta
 import uvicorn
 
 app = FastAPI()
+
 data = {
     "keys": {},
     "used_keys": {},
@@ -43,7 +47,13 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    channel = discord.utils.get(bot.get_all_channels(), name="general")
+    print(f"Logged in as {bot.user}")
+    channel = None
+    for guild in bot.guilds:
+        for ch in guild.text_channels:
+            if ch.name == "general":
+                channel = ch
+                break
     if channel:
         embed = Embed(title="Key Generator", description="Press the button to receive your key.", color=0x00ff00)
         view = View()
@@ -66,11 +76,13 @@ async def on_ready():
         view.add_item(button)
         await channel.send(embed=embed, view=view)
 
-async def main():
-    bot_task = asyncio.create_task(bot.start(os.getenv("DISCORD_BOT")))
-    config = uvicorn.Config(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)), log_level="info")
-    server = uvicorn.Server(config)
-    await asyncio.gather(bot_task, server.serve())
+async def start_bot():
+    await bot.start(os.getenv("DISCORD_BOT"))
+
+def run():
+    loop = asyncio.get_event_loop()
+    loop.create_task(start_bot())
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    run()
